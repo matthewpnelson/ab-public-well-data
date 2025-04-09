@@ -8,5 +8,6 @@ dependencies = [
     "polars>=1.26.0",
     "pyarrow>=19.0.1",
     "requests>=2.32.3",
+    "setuptools>=78.1.0",
     "ydata-profiling>=4.16.1",
 ]

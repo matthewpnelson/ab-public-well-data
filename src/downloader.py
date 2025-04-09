@@ -162,8 +162,8 @@ def download_aer_st37(download_dir: Path = DEFAULT_DOWNLOAD_DIR) -> Optional[Pat
             logging.info(f"Files in ZIP: {file_list}")
             
             # Find the ST37 TXT file
-            # The exact name may vary, so we'll check for "ST37" and ".txt" in the filename
-            txt_files = [f for f in file_list if "ST37" in f.upper() and f.lower().endswith('.txt')]
+            # The exact name may vary, so we'll check for ".txt" in the filename
+            txt_files = [f for f in file_list if f.lower().endswith('.txt')]
             
             if not txt_files:
                 logging.error("No ST37 TXT file found in the ZIP")
@@ -229,7 +229,7 @@ def download_aer_st37(download_dir: Path = DEFAULT_DOWNLOAD_DIR) -> Optional[Pat
 
 def get_latest_petrinex_url() -> Optional[str]:
     """
-    Determines the latest available Petrinex URL by trying the current month
+    Determines the latest available Petrinex URL by trying the previous month first
     and then going backward month by month until a valid URL is found.
     
     Returns:
@@ -238,26 +238,27 @@ def get_latest_petrinex_url() -> Optional[str]:
     # Get current date
     now = datetime.datetime.now()
     
-    # Try starting from two months ago (as current month data is often not available yet)
-    start_date = now.replace(day=1) - datetime.timedelta(days=1)
-    # We now have the last day of the previous month, so go back one more month
-    start_date = start_date.replace(day=1) - datetime.timedelta(days=1)
-    
-    # Try for the last 6 months
+    # Try for the last 6 months, starting with previous month
     for i in range(6):
-        # Calculate the month to try (moving backward from our start date)
-        check_date = start_date - datetime.timedelta(days=30*i)
-        year = check_date.year
-        month = check_date.month
+        # Calculate year and month by subtracting months from current date
+        # Start with previous month (i=0) and go back
+        year = now.year
+        month = now.month - i - 1  # -1 to start with previous month
+        
+        # Handle year rollover if month becomes <= 0
+        if month <= 0:
+            month = 12 + month  # Convert negative or zero month to proper month
+            year -= 1
         
         # Construct the URL to check
         url = PETRINEX_URL_TEMPLATE.format(year=year, month=month)
         
         logging.info(f"Checking for Petrinex data at: {url}")
         
-        # Check if this URL is valid
+        # Check if this URL is valid using GET
         try:
-            with requests.head(url, timeout=10, headers=BROWSER_HEADERS) as response:
+            with requests.get(url, timeout=10, headers=BROWSER_HEADERS, stream=True) as response:
+                # Just check the status code, don't try to parse the response
                 if response.status_code == 200:
                     logging.info(f"Found valid Petrinex data URL: {url}")
                     return url
@@ -266,8 +267,16 @@ def get_latest_petrinex_url() -> Optional[str]:
         except requests.exceptions.RequestException as e:
             logging.warning(f"Error checking URL {url}: {e}")
     
-    logging.error("No valid Petrinex URL found in the last 6 months")
-    return None
+    logging.error("No valid Petrinex URL found in the last 6 months. Falling back to previous month")
+    
+    # fallback to previous month
+    year = now.year
+    month = now.month - 1
+    if month <= 0:
+        month = 12
+        year -= 1
+    url = PETRINEX_URL_TEMPLATE.format(year=year, month=month)
+    return url
 
 
 def download_petrinex(download_dir: Path = DEFAULT_DOWNLOAD_DIR) -> Optional[Path]:
@@ -467,19 +476,19 @@ def download_petrinex(download_dir: Path = DEFAULT_DOWNLOAD_DIR) -> Optional[Pat
 if __name__ == "__main__":
     logging.info("Running downloader directly...")
     
-    # Download AER ST1 data
-    st1_path = download_aer_st1()
-    if st1_path:
-        logging.info(f"AER ST1 download complete: {st1_path}")
-    else:
-        logging.error("AER ST1 download failed.")
+    # # Download AER ST1 data
+    # st1_path = download_aer_st1()
+    # if st1_path:
+    #     logging.info(f"AER ST1 download complete: {st1_path}")
+    # else:
+    #     logging.error("AER ST1 download failed.")
     
-    # Download AER ST37 data
-    st37_path = download_aer_st37()
-    if st37_path:
-        logging.info(f"AER ST37 download complete: {st37_path}")
-    else:
-        logging.error("AER ST37 download failed.")
+    # # Download AER ST37 data
+    # st37_path = download_aer_st37()
+    # if st37_path:
+    #     logging.info(f"AER ST37 download complete: {st37_path}")
+    # else:
+    #     logging.error("AER ST37 download failed.")
     
     # Download Petrinex data
     petrinex_path = download_petrinex()

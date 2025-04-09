@@ -36,6 +36,9 @@ def load_aer_st1(file_path: Path) -> Optional[pl.DataFrame]:
         
         # If the profile file does not yet exist, generate it
         profile_file = "data/profiles/st1.html"
+        profile_dir = Path("data/profiles")
+        profile_dir.mkdir(parents=True, exist_ok=True)  # Create profiles directory if it doesn't exist
+        
         if not Path(profile_file).exists():
             profile = ProfileReport(df.to_pandas(), title="AER ST1 Profiling Report")
             profile.to_file(profile_file)
@@ -190,10 +193,10 @@ def load_aer_st37(txt_path: Path) -> Optional[pl.DataFrame]:
         logging.info(df.head(5))
         logging.info(df.columns)
         
-        # If the profile file does not yet exist, generate it
+        # Generate profile report if it doesn't exist
         profile_file = "data/profiles/st37.html"
         profile_dir = Path("data/profiles")
-        profile_dir.mkdir(parents=True, exist_ok=True)
+        profile_dir.mkdir(parents=True, exist_ok=True)  # Create profiles directory if it doesn't exist
         
         if not Path(profile_file).exists():
             profile = ProfileReport(df.to_pandas(), title="AER ST37 Profiling Report")
@@ -300,10 +303,10 @@ def load_petrinex(file_path: Path) -> Optional[pl.DataFrame]:
             logging.info(df.head(5))
             logging.info(f"Columns: {df.columns}")
             
-            # If the profile file does not yet exist, generate it
+            # Generate profile report if it doesn't exist
             profile_file = "data/profiles/petrinex.html"
             profile_dir = Path("data/profiles")
-            profile_dir.mkdir(parents=True, exist_ok=True)
+            profile_dir.mkdir(parents=True, exist_ok=True)  # Create profiles directory if it doesn't exist
             
             if not Path(profile_file).exists():
                 profile = ProfileReport(df.to_pandas(), title="Petrinex Profiling Report")

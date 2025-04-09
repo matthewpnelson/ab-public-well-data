@@ -37,9 +37,9 @@ def parse_args():
     )
     
     parser.add_argument(
-        "--skip-profile", 
+        "--run-profiles", 
         action="store_true", 
-        help="Skip generating profile report (faster processing)"
+        help="Generate profile reports (slower processing)"
     )
     
     return parser.parse_args()
@@ -52,7 +52,7 @@ def main():
     args = parse_args()
     download_dir = Path("data/raw")
     output_dir = Path("output")
-    generate_profile = not args.skip_profile
+    generate_profile = args.run_profiles
     
     # Ensure directories exist
     download_dir.mkdir(parents=True, exist_ok=True)
