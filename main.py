@@ -52,7 +52,14 @@ def main():
     args = parse_args()
     download_dir = Path("data/raw")
     output_dir = Path("output")
-    generate_profile = args.run_profiles
+    
+    # Explicitly set generate_profile to False by default, only True when --run-profiles is specified
+    generate_profile = False
+    if args.run_profiles:
+        generate_profile = True
+        logging.info("Profile generation enabled via --run-profiles flag")
+    else:
+        logging.info("Profile generation disabled (use --run-profiles to enable)")
     
     # Ensure directories exist
     download_dir.mkdir(parents=True, exist_ok=True)
