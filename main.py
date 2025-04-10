@@ -112,17 +112,17 @@ def main():
     # Step 2: Load data
     logging.info("STEP 2: Loading data files")
     
-    st1_df = load_aer_st1(st1_path)
+    st1_df = load_aer_st1(st1_path, generate_profile=generate_profile)
     if st1_df is None:
         logging.error("Failed to load AER ST1 data - aborting pipeline")
         return 1
     
-    st37_df = load_aer_st37(st37_path)
+    st37_df = load_aer_st37(st37_path, generate_profile=generate_profile)
     if st37_df is None:
         logging.error("Failed to load AER ST37 data - aborting pipeline")
         return 1
     
-    petrinex_df = load_petrinex(petrinex_path)
+    petrinex_df = load_petrinex(petrinex_path, generate_profile=generate_profile)
     if petrinex_df is None:
         logging.error("Failed to load Petrinex data - aborting pipeline")
         return 1

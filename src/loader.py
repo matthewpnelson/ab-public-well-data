@@ -8,12 +8,13 @@ from ydata_profiling import ProfileReport
 # Configure basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def load_aer_st1(file_path: Path) -> Optional[pl.DataFrame]:
+def load_aer_st1(file_path: Path, generate_profile: bool = False) -> Optional[pl.DataFrame]:
     """
     Load the AER ST1 CSV file into a Polars DataFrame.
     
     Args:
         file_path: Path to the AER ST1 CSV file.
+        generate_profile: Whether to generate a data profile report.
         
     Returns:
         A Polars DataFrame containing the AER ST1 data, or None if loading fails.
@@ -34,14 +35,17 @@ def load_aer_st1(file_path: Path) -> Optional[pl.DataFrame]:
         logging.info(df.head(5))
         logging.info(df.columns)
         
-        # If the profile file does not yet exist, generate it
-        profile_file = "data/profiles/st1.html"
-        profile_dir = Path("data/profiles")
-        profile_dir.mkdir(parents=True, exist_ok=True)  # Create profiles directory if it doesn't exist
-        
-        if not Path(profile_file).exists():
+        # Only generate profile if requested
+        if generate_profile:
+            # If the profile file does not yet exist, generate it
+            profile_file = "data/profiles/st1.html"
+            profile_dir = Path("data/profiles")
+            profile_dir.mkdir(parents=True, exist_ok=True)  # Create profiles directory if it doesn't exist
+            
+            logging.info(f"Generating profile report for AER ST1 data")
             profile = ProfileReport(df.to_pandas(), title="AER ST1 Profiling Report")
             profile.to_file(profile_file)
+            logging.info(f"Profile report saved to {profile_file}")
         
         # Basic validation - check if essential columns exist
         essential_cols = ["01.Licence Number", "02.Company Name", "03.Latitude", "04.Longitude", "05.Surface Location", "08.Licence Status", "09.Licence Status Date", "10.Non-Routine Licence (Y or N)"]
@@ -131,12 +135,13 @@ def extract_st37_zip(zip_path: Path, extract_dir: Optional[Path] = None) -> Dict
         return {}
 
 
-def load_aer_st37(txt_path: Path) -> Optional[pl.DataFrame]:
+def load_aer_st37(txt_path: Path, generate_profile: bool = False) -> Optional[pl.DataFrame]:
     """
     Load the AER ST37 data into a Polars DataFrame.
     
     Args:
         txt_path: Path to the ST37 TXT file.
+        generate_profile: Whether to generate a data profile report.
         
     Returns:
         A Polars DataFrame containing the AER ST37 data, or None if loading fails.
@@ -193,14 +198,17 @@ def load_aer_st37(txt_path: Path) -> Optional[pl.DataFrame]:
         logging.info(df.head(5))
         logging.info(df.columns)
         
-        # Generate profile report if it doesn't exist
-        profile_file = "data/profiles/st37.html"
-        profile_dir = Path("data/profiles")
-        profile_dir.mkdir(parents=True, exist_ok=True)  # Create profiles directory if it doesn't exist
-        
-        if not Path(profile_file).exists():
+        # Only generate profile if requested
+        if generate_profile:
+            # Generate profile report if it doesn't exist
+            profile_file = "data/profiles/st37.html"
+            profile_dir = Path("data/profiles")
+            profile_dir.mkdir(parents=True, exist_ok=True)  # Create profiles directory if it doesn't exist
+            
+            logging.info(f"Generating profile report for AER ST37 data")
             profile = ProfileReport(df.to_pandas(), title="AER ST37 Profiling Report")
             profile.to_file(profile_file)
+            logging.info(f"Profile report saved to {profile_file}")
         
         # Basic validation - check for key identifier column
         if "UWI" not in df.columns:
@@ -252,12 +260,13 @@ def load_aer_st37(txt_path: Path) -> Optional[pl.DataFrame]:
         return None
 
 
-def load_petrinex(file_path: Path) -> Optional[pl.DataFrame]:
+def load_petrinex(file_path: Path, generate_profile: bool = False) -> Optional[pl.DataFrame]:
     """
     Load the Petrinex CSV file into a Polars DataFrame.
     
     Args:
         file_path: Path to the Petrinex CSV file.
+        generate_profile: Whether to generate a data profile report.
         
     Returns:
         A Polars DataFrame containing the Petrinex data, or None if loading fails.
@@ -303,14 +312,17 @@ def load_petrinex(file_path: Path) -> Optional[pl.DataFrame]:
             logging.info(df.head(5))
             logging.info(f"Columns: {df.columns}")
             
-            # Generate profile report if it doesn't exist
-            profile_file = "data/profiles/petrinex.html"
-            profile_dir = Path("data/profiles")
-            profile_dir.mkdir(parents=True, exist_ok=True)  # Create profiles directory if it doesn't exist
-            
-            if not Path(profile_file).exists():
+            # Only generate profile if requested
+            if generate_profile:
+                # Generate profile report if it doesn't exist
+                profile_file = "data/profiles/petrinex.html"
+                profile_dir = Path("data/profiles")
+                profile_dir.mkdir(parents=True, exist_ok=True)  # Create profiles directory if it doesn't exist
+                
+                logging.info(f"Generating profile report for Petrinex data")
                 profile = ProfileReport(df.to_pandas(), title="Petrinex Profiling Report")
                 profile.to_file(profile_file)
+                logging.info(f"Profile report saved to {profile_file}")
             
             # Basic validation
             # We'll need to extract oil and gas production volumes
