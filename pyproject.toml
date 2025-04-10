@@ -1,7 +1,7 @@
 [project]
-name = "stack"
+name = "ab-public-well-data"
 version = "0.1.0"
-description = "Add your description here"
+description = "Alberta Public Well Data Pipeline - an example data pipeline for downloading, processing, and normalizing public well data from Alberta Energy Regulator (AER) and Petrinex sources."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

@@ -26,6 +26,8 @@ Some data cleaning has been completed - including selecting and renaming columns
 Run the pipeline. On first run, uv will set up a virtual environment and install dependencies:
 
 ```bash
+git clone https://github.com/matthewpnelson/ab-public-well-data.git
+cd ab-public-well-data
 uv run main.py
 ```
 
