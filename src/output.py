@@ -102,6 +102,10 @@ def analyze_data_quality(df: pl.DataFrame) -> dict:
     """
     quality_metrics = {}
     
+    # Add total rows to quality metrics
+    total_rows = df.shape[0]
+    quality_metrics['total_rows'] = total_rows
+    
     # Find oil and gas volume columns
     oil_vol_col = next((col for col in df.columns if 'oil' in col.lower() and 'vol' in col.lower()), None)
     gas_vol_col = next((col for col in df.columns if 'gas' in col.lower() and 'vol' in col.lower()), None)
@@ -120,18 +124,23 @@ def analyze_data_quality(df: pl.DataFrame) -> dict:
         (pl.col(gas_vol_col).is_not_null() & (pl.col(gas_vol_col) > 0))
     ).shape[0]
     
+    # Calculate rows without production
+    rows_without_production = total_rows - rows_with_production
+    
+    # Basic metrics
     quality_metrics['rows_with_oil'] = rows_with_oil
     quality_metrics['rows_with_gas'] = rows_with_gas
     quality_metrics['rows_with_production'] = rows_with_production
+    quality_metrics['rows_without_production'] = rows_without_production
+    quality_metrics['pct_with_production'] = (rows_with_production / total_rows) * 100 if total_rows > 0 else 0
+    quality_metrics['pct_without_production'] = (rows_without_production / total_rows) * 100 if total_rows > 0 else 0
     
-    # Check if status columns exist
+    # For more detailed analysis by well mode/status
+    status_col = next((col for col in df.columns if 'status' in col.lower() and 'licen' not in col.lower()), None)
+    
+    # Group production by mode (if it exists)
     if mode_col:
-        # First check the data type of the status column
-        status_dtype = df.schema[mode_col]
-        is_string_status = isinstance(status_dtype, pl.String)
-        
-        # Count production by status
-        production_by_status = df.filter(
+        production_by_mode = df.filter(
             (pl.col(oil_vol_col).is_not_null() & (pl.col(oil_vol_col) > 0)) | 
             (pl.col(gas_vol_col).is_not_null() & (pl.col(gas_vol_col) > 0))
         ).group_by(mode_col).agg(
@@ -141,18 +150,28 @@ def analyze_data_quality(df: pl.DataFrame) -> dict:
         )
         
         # Convert to dictionary for logging
-        status_counts = production_by_status.select([mode_col, "count"]).to_dict(as_series=False)
-        quality_metrics['production_by_status'] = {
-            str(status): count for status, count in zip(status_counts[mode_col], status_counts["count"])
+        mode_counts = production_by_mode.select([mode_col, "count"]).to_dict(as_series=False)
+        quality_metrics['production_by_mode'] = {
+            str(mode): count for mode, count in zip(mode_counts[mode_col], mode_counts["count"])
         }
         
-    # Check license status if available
-    if license_status_col:
-        # First check the data type of the license status column
-        license_status_dtype = df.schema[license_status_col]
-        is_string_license_status = isinstance(license_status_dtype, pl.String)
+        # Add no_production_by_mode - wells without production grouped by mode
+        no_production_by_mode = df.filter(
+            ~((pl.col(oil_vol_col).is_not_null() & (pl.col(oil_vol_col) > 0)) | 
+              (pl.col(gas_vol_col).is_not_null() & (pl.col(gas_vol_col) > 0)))
+        ).group_by(mode_col).agg(
+            pl.count().alias("count")
+        )
         
-        # Count production by license status
+        # Convert to dictionary
+        no_prod_mode_counts = no_production_by_mode.select([mode_col, "count"]).to_dict(as_series=False)
+        quality_metrics['no_production_by_mode'] = {
+            str(mode): count for mode, count in zip(no_prod_mode_counts[mode_col], no_prod_mode_counts["count"])
+        }
+    
+    
+    # Group production by license status
+    if license_status_col:
         production_by_license_status = df.filter(
             (pl.col(oil_vol_col).is_not_null() & (pl.col(oil_vol_col) > 0)) | 
             (pl.col(gas_vol_col).is_not_null() & (pl.col(gas_vol_col) > 0))
@@ -166,6 +185,20 @@ def analyze_data_quality(df: pl.DataFrame) -> dict:
         license_status_counts = production_by_license_status.select([license_status_col, "count"]).to_dict(as_series=False)
         quality_metrics['production_by_license_status'] = {
             str(status): count for status, count in zip(license_status_counts[license_status_col], license_status_counts["count"])
+        }
+        
+        # Add no_production_by_license_status - wells without production grouped by license status
+        no_production_by_license_status = df.filter(
+            ~((pl.col(oil_vol_col).is_not_null() & (pl.col(oil_vol_col) > 0)) | 
+              (pl.col(gas_vol_col).is_not_null() & (pl.col(gas_vol_col) > 0)))
+        ).group_by(license_status_col).agg(
+            pl.count().alias("count")
+        )
+        
+        # Convert to dictionary
+        no_prod_license_counts = no_production_by_license_status.select([license_status_col, "count"]).to_dict(as_series=False)
+        quality_metrics['no_production_by_license_status'] = {
+            str(status): count for status, count in zip(no_prod_license_counts[license_status_col], no_prod_license_counts["count"])
         }
     
     return quality_metrics
